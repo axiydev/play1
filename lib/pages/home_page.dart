@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:play/constants/constants.dart';
+import 'package:play/custom_widgets/music_widget.dart';
 import 'dart:math' as M;
+
+import 'package:play/custom_widgets/my_widget.dart';
+import 'package:play/models/music_model.dart';
 class HomePage extends StatefulWidget {
   static const String id='home_page';
   @override
@@ -10,7 +14,14 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage>with SingleTickerProviderStateMixin{
   Animation _animation;
   AnimationController _controller;
-  bool isPlaying=false;
+  bool isPlaying=true;
+  List<Music> lt=[
+    Music(artist: "Maher Zain",title: "For the rest of my life"),
+    Music(artist: "Maher Zain",title: "For the rest of my life"),
+    Music(artist: "Maher Zain",title: "For the rest of my life"),
+    Music(artist: "Maher Zain",title: "For the rest of my life"),
+    Music(artist: "Maher Zain",title: "For the rest of my life"),
+  ];
   @override
   void initState(){
     super.initState();
@@ -21,7 +32,13 @@ class _HomePageState extends State<HomePage>with SingleTickerProviderStateMixin{
         _controller.repeat();
       }
     });
-    _controller.forward();
+  }
+
+  Stream<double> dataB()async*{
+    for(var i=0;i<=200;i++){
+      await Future.delayed(Duration(milliseconds: 20));
+      yield i.toDouble();
+    }
   }
   @override
   void dispose(){
@@ -57,8 +74,8 @@ class _HomePageState extends State<HomePage>with SingleTickerProviderStateMixin{
                 border:Border(top: BorderSide(width:1,color: Colors.grey),bottom:BorderSide(width: 1,color: Colors.grey),left: BorderSide(width: 1,color: Colors.grey),right: BorderSide(width: 1,color: Colors.grey)),
                 boxShadow: [
                   BoxShadow(color: Colors.white,spreadRadius:0,offset: Offset(-4,-4),blurRadius:5),
-                  BoxShadow(color: Colors.grey[700],spreadRadius: 0,offset: Offset(3,6),blurRadius:6),
-                  BoxShadow(color: Colors.grey[700],spreadRadius: 0,offset: Offset(3,6),blurRadius:6),
+                  BoxShadow(color: Colors.grey[700],spreadRadius: 0,offset: Offset(3,4),blurRadius:6),
+                  BoxShadow(color: Colors.grey[700],spreadRadius: 0,offset: Offset(3,4),blurRadius:6),
                 ],
             ),
             child: Center(
@@ -91,8 +108,8 @@ class _HomePageState extends State<HomePage>with SingleTickerProviderStateMixin{
                   border:Border(top: BorderSide(width:1,color: Colors.grey),bottom:BorderSide(width: 1,color: Colors.grey),left: BorderSide(width: 1,color: Colors.grey),right: BorderSide(width: 1,color: Colors.grey)),
                   boxShadow: [
                     BoxShadow(color: Colors.white,spreadRadius:0,offset: Offset(-4,-4),blurRadius:5),
-                    BoxShadow(color: Colors.grey[700],spreadRadius: 0,offset: Offset(3,6),blurRadius:6),
-                    BoxShadow(color: Colors.grey[700],spreadRadius: 0,offset: Offset(3,6),blurRadius:6),
+                    BoxShadow(color: Colors.grey[700],spreadRadius: 0,offset: Offset(3,4),blurRadius:6),
+                    BoxShadow(color: Colors.grey[700],spreadRadius: 0,offset: Offset(3,4),blurRadius:6),
                   ],
                 ),
                 child: Center(
@@ -158,7 +175,10 @@ class _HomePageState extends State<HomePage>with SingleTickerProviderStateMixin{
                    children: [
                      _nextPrevious(context,icon: Icons.skip_previous),
                      isPlaying?_isplay(context):GestureDetector(
-                       onTap:()=>setState(()=>isPlaying=true),
+                       onTap:(){
+                         setState(()=>isPlaying=true);
+                         _controller.stop();
+                       },
                        child: AnimatedContainer(
                          height: size.width*0.25,
                          width: size.width*0.25,
@@ -184,6 +204,36 @@ class _HomePageState extends State<HomePage>with SingleTickerProviderStateMixin{
                    ],
                  ),
                ),
+                StreamBuilder(
+                  stream: dataB(),
+                  builder: (context,snap){
+                    if(snap.hasData){
+                      return ProIndicator(value_dx:snap.data);
+                    }else if(!snap.hasData){
+                      return ProIndicator(value_dx:0.0);
+                    }
+                  },
+                ),
+                Expanded(
+                  child:Container(
+                    padding: EdgeInsets.only(top:15),
+                    margin:EdgeInsets.only(top:25),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.vertical(top:Radius.circular(size.width*0.08)),
+                      color: iColor,
+                      // border:Border(top: BorderSide(width:3,color: lColor)),
+                      boxShadow: [
+                        BoxShadow(color: Colors.white,spreadRadius:0,offset: Offset(-4,-4),blurRadius:5),
+                        BoxShadow(color: Colors.grey[700],spreadRadius: 0,offset: Offset(5,10),blurRadius:10),
+                        BoxShadow(color: Colors.grey[700],spreadRadius: 0,offset: Offset(5,10),blurRadius:15),
+                      ],
+                    ),
+                    child: ListView.builder(
+                      itemCount: lt.length,
+                      itemBuilder: (context,index)=>MusicWidget(music:lt[index]),
+                    ),
+                  )
+                ),
               ],
             ),
         ),
@@ -193,7 +243,10 @@ class _HomePageState extends State<HomePage>with SingleTickerProviderStateMixin{
   Widget _isplay(BuildContext context){
     final Size size=MediaQuery.of(context).size;
     return GestureDetector(
-      onTap:()=>setState(()=>isPlaying=false),
+      onTap:(){
+        setState(()=>isPlaying=false);
+        _controller.forward();
+        },
       child: AnimatedContainer(
         height: size.width*0.25,
         width: size.width*0.25,
@@ -225,12 +278,16 @@ class _HomePageState extends State<HomePage>with SingleTickerProviderStateMixin{
       ),
     );
   }
-  Widget _nextPrevious(BuildContext context,{icon,}){
+  Widget _nextPrevious(BuildContext context,{icon,isPrevious}){
     final Size size=MediaQuery.of(context).size;
     return Transform.translate(
       offset:Offset(0,-size.width*0.17),
       child:GestureDetector(
-        onTap:(){},
+        onTap:(){
+          setState(() {
+            _controller.reset();
+          });
+        },
         child:AnimatedContainer(
           curve: Curves.easeIn,
           duration: Duration(milliseconds: 100),
